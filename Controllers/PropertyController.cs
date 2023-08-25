@@ -25,7 +25,6 @@ namespace RealEstateApp.Api.Controllers
             _context = context;
         }
 
-        [Authorize(Roles = UserRoles.User)]
         [HttpGet]
         [Route("getById")]
         public async Task<IActionResult> GetById(int id)
@@ -38,10 +37,9 @@ namespace RealEstateApp.Api.Controllers
                 .Include(x => x.PropertyStatus)
                 .Include(x => x.PropertyType)
                 .FirstOrDefaultAsync();
-            if (result == null)
-            {
-                return NotFound();
-            }
+
+            if (result == null) return NotFound();
+            
             var images = new List<PropertyFieldInfoDTO<PropertyImage>>();
             foreach (var image in result.PropertyImages)
             {
@@ -143,7 +141,6 @@ namespace RealEstateApp.Api.Controllers
             return Ok(responseDTO);
         }
 
-        [Authorize(Roles = UserRoles.User)]
         [HttpGet]
         [Route("getPaginated")]
         public async Task<IActionResult> GetPaginated
@@ -205,6 +202,7 @@ namespace RealEstateApp.Api.Controllers
             return Ok(responseDTO);
         }
 
+        [Authorize(Roles = UserRoles.User)]
         [HttpGet]
         [Route("getAnalyticsByUserId")]
         public async Task<IActionResult> GetAnalyticsByUserId()
@@ -479,14 +477,10 @@ namespace RealEstateApp.Api.Controllers
             int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
             var item = await _context.Properties
                 .SingleOrDefaultAsync(x => x.Id == id && x.Status != (int)EntityStatus.Deleted);
-            if (item == null)
-            {
-                return NotFound();
-            }
-            if (item.UserId != userId && !User.IsInRole(UserRoles.Admin))
-            {
-                return Unauthorized();
-            }
+            if (item == null) return NotFound();
+            
+            if (item.UserId != userId && !User.IsInRole(UserRoles.Admin)) return Unauthorized();
+            
             item.Status = (int)EntityStatus.Deleted;
             await _context.SaveChangesAsync();
             return NoContent();

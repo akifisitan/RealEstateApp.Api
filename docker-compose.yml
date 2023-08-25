@@ -1,0 +1,25 @@
+volumes:
+  mssqlvolume:
+
+
+services:
+  web_api:
+    image: realestateapp-api
+    container_name: realestateapp-api
+    ports:
+      - "5000:80"
+    environment:
+      - ConnectionStrings__RealEstate=${ConnectionStrings__RealEstate}
+      - ConnectionStrings__RealEstateIdentity=${ConnectionStrings__RealEstateIdentity}
+      - JWT__Secret=${JWT__Secret}
+
+  sql:
+    image: "mcr.microsoft.com/mssql/server"
+    container_name: ms-sql-db
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=y
+      - SA_PASSWORD=${SA_PASSWORD}
+    volumes:
+      - mssqlvolume:/var/opt/mssql

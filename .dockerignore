@@ -1,0 +1,39 @@
+# Testing
+RealEstateApp-ts/
+
+# Rider
+*.idea/
+*.vscode/
+
+# Visual Studio files
+*.suo
+*.user
+*.sln.docstates
+*.vs/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Oo]bj/
+[Oo]ut/
+
+# NuGet packages
+*/packages/
+*.nupkg
+**/packages/*
+*.nuget.props
+*.nuget.targets
+
+# Other files
+*.log
+*.bak
+*.Cache
+*.csproj.user
+*.resharper
+*.resharper.user
+*.suo
+*.userprefs
+*.vspscc

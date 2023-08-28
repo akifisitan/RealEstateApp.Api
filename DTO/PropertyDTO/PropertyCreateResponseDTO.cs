@@ -1,4 +1,6 @@
-﻿namespace RealEstateApp.Api.DTO.PropertyDTO
+﻿using RealEstateApp.Api.Entity;
+
+namespace RealEstateApp.Api.DTO.PropertyDTO
 {
     public class PropertyCreateResponseDTO : BaseDTO.BaseDTO
     {
@@ -13,5 +15,19 @@
         public int CurrencyId { get; set; }
         public string Thumbnail { get; set; }
         public List<string> Images { get; set; }
+        public PropertyCreateResponseDTO(Property property, List<string> images)
+        {
+            Price = property.Price;
+            StartDate = property.StartDate;
+            EndDate = property.EndDate;
+            Latitude = property.Latitude;
+            Longitude = property.Longitude;
+            UserId = property.UserId;
+            TypeId = property.PropertyTypeId;
+            StatusId = property.PropertyStatusId;
+            CurrencyId = property.CurrencyId;
+            Thumbnail = property.Thumbnail;
+            Images = images;
+        }
     }
 }

@@ -381,24 +381,40 @@ namespace RealEstateApp.Api.Controllers
         public async Task<IActionResult> Create([FromForm] PropertyCreateRequestDTO request)
         {
             var response = new GenericResponse<PropertyCreateResponseDTO>();
-            if (!DateTime.TryParseExact(request.StartDate, "dd/MM/yyyy",
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out DateTime parsedStartDate) ||
-                !DateTime.TryParseExact(request.EndDate, "dd/MM/yyyy",
+            if (!DateTime.TryParseExact(request.EndDate, "dd/MM/yyyy",
                 System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.None, out DateTime parsedEndDate))
             {
                 response.Message = "Please enter a valid date in dd/MM/yyyy format.";
                 return BadRequest(response);
             }
-            if (parsedStartDate > parsedEndDate)
+            var startDate = DateTime.Now;
+            if (startDate >= parsedEndDate)
             {
-                response.Message = "Please make sure the start date is earlier than the end date.";
+                response.Message = "Please make sure the end date is later than today.";
+                return BadRequest(response);
+            }
+            var propertyType = _context.PropertyTypes.SingleOrDefault(x => x.Id == request.PropertyTypeId && x.Status != (int)EntityStatus.Deleted);
+            if (propertyType == null)
+            {
+                response.Message = "Please enter a valid property type id.";
+                return BadRequest(response);
+            }
+            var propertyStatus = _context.PropertyStatuses.SingleOrDefault(x => x.Id == request.PropertyStatusId && x.Status != (int)EntityStatus.Deleted);
+            if (propertyStatus == null)
+            {
+                response.Message = "Please enter a valid property status id.";
+                return BadRequest(response);
+            }
+            var currency = _context.Currencies.SingleOrDefault(x => x.Id == request.CurrencyId && x.Status != (int)EntityStatus.Deleted);
+            if (currency == null)
+            {
+                response.Message = "Please enter a valid currency id.";
                 return BadRequest(response);
             }
             if (request.Photos.Count < 1)
             {
-                response.Message = "Please upload at least one photo.";
+                response.Message = "Please upload at least one image.";
                 return BadRequest(response);
             }
             var imageStrings = new List<string>();
@@ -425,24 +441,21 @@ namespace RealEstateApp.Api.Controllers
             }
             if (imageStrings.Count == 0)
             {
-                response.Message = "Please upload at least one image.";
+                response.Message = "Please upload at least one valid image.";
                 return BadRequest(response);
             }
-
             using var thumbnailStream = new MemoryStream();
             await request.Photos[0].CopyToAsync(thumbnailStream);
-
             using var thumbnail = Image.Load(thumbnailStream.ToArray());
             thumbnail.Mutate(x => x.Resize(320, 240, KnownResamplers.Lanczos3));
-            var thumbnailString = thumbnail.ToBase64String(JpegFormat.Instance);
-
 
             int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
+
             var newProperty = new Property
             {
-                StartDate = parsedStartDate,
+                StartDate = startDate,
                 EndDate = parsedEndDate,
-                Thumbnail = thumbnailString,
+                Thumbnail = thumbnail.ToBase64String(JpegFormat.Instance),
                 Latitude = request.Latitude,
                 Longitude = request.Longitude,
                 PropertyTypeId = request.PropertyTypeId,
@@ -464,22 +477,7 @@ namespace RealEstateApp.Api.Controllers
                 _context.PropertyImages.Add(newImage);
             }
             await _context.SaveChangesAsync();
-            var data = new PropertyCreateResponseDTO
-            {
-                Id = propertyId,
-                StartDate = parsedStartDate,
-                EndDate = parsedEndDate,
-                Thumbnail = thumbnailString,
-                Latitude = request.Latitude,
-                Longitude = request.Longitude,
-                TypeId = request.PropertyTypeId,
-                StatusId = request.PropertyStatusId,
-                CurrencyId = request.CurrencyId,
-                Price = request.Price,
-                UserId = userId,
-                Images = imageStrings
-            };
-            response.Data = data;
+            response.Data = new PropertyCreateResponseDTO(newProperty, imageStrings);
             response.Message = "Property created successfully.";
             return Ok(response);
         }
@@ -488,7 +486,6 @@ namespace RealEstateApp.Api.Controllers
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] PropertyUpdateRequestDTO request)
         {
-            var response = new GenericResponse<PropertyUpdateResponseDTO>();
             var property = await _context.Properties
                 .Where(x => x.Id == request.Id && x.Status != (int)EntityStatus.Deleted)
                 .Include(x => x.User)
@@ -499,27 +496,23 @@ namespace RealEstateApp.Api.Controllers
 
             if (property == null)
             {
-                response.Message = "No property found with the given id.";
-                return NotFound(response);
+                return NotFound("No property found with the given id.");
             }
             int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
             if (userId != property.UserId && !User.IsInRole(UserRoles.Admin))
             {
-                response.Message = "You are not authorized to update this property.";
-                return Unauthorized(response);
+                return Unauthorized("You are not authorized to update this property.");
             }
             var valid = DateTime.TryParseExact(request.EndDate, "dd/MM/yyyy",
                 System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.None, out DateTime parsedEndDate);
             if (request.EndDate != null && !valid)
             {
-                response.Message = "Please enter a valid date in dd/MM/yyyy format.";
-                return BadRequest(response);
+                return BadRequest("Please enter a valid date in dd/MM/yyyy format.");
             }
             if (valid && property.StartDate > parsedEndDate)
             {
-                response.Message = "Please make sure the end date is later than the start date.";
-                return BadRequest(response);
+                return BadRequest("Please make sure the end date is later than the start date.");
             }
             else
             {
@@ -533,8 +526,7 @@ namespace RealEstateApp.Api.Controllers
                 var propertyType = _context.PropertyTypes.SingleOrDefault(x => x.Id == request.PropertyTypeId && x.Status != (int)EntityStatus.Deleted);
                 if (propertyType == null)
                 {
-                    response.Message = "Please enter a valid property type id.";
-                    return BadRequest(response);
+                    return BadRequest("Please enter a valid property type id.");
                 }
                 property.PropertyTypeId = propertyType.Id;
             }
@@ -543,8 +535,7 @@ namespace RealEstateApp.Api.Controllers
                 var propertyStatus = _context.PropertyStatuses.SingleOrDefault(x => x.Id == request.PropertyStatusId && x.Status != (int)EntityStatus.Deleted);
                 if (propertyStatus == null)
                 {
-                    response.Message = "Please enter a valid property status id.";
-                    return BadRequest(response);
+                    return BadRequest("Please enter a valid property status id.");
                 }
                 property.PropertyStatusId = propertyStatus.Id;
             }
@@ -553,8 +544,7 @@ namespace RealEstateApp.Api.Controllers
                 var currency = _context.Currencies.SingleOrDefault(x => x.Id == request.CurrencyId && x.Status != (int)EntityStatus.Deleted);
                 if (currency == null)
                 {
-                    response.Message = "Please enter a valid currency id.";
-                    return BadRequest(response);
+                    return BadRequest("Please enter a valid currency id.");
                 }
                 property.CurrencyId = currency.Id;
             }

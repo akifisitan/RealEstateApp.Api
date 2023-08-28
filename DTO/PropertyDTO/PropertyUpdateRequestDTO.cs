@@ -2,9 +2,7 @@
 {
     public class PropertyUpdateRequestDTO : BaseDTO.BaseDTO
     {
-        public List<IFormFile>? Photos { get; set; }
-        public string StartDate { get; set; }
-        public string EndDate { get; set; }
+        public string? EndDate { get; set; }
         public float? Latitude { get; set; }
         public float? Longitude { get; set; }
         public int? PropertyTypeId { get; set; }

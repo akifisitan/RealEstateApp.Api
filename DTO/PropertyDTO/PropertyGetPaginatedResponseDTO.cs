@@ -6,6 +6,6 @@
         public int CurrentPage { get; set; }
         public int ItemsPerPage { get; set; }
         public int NumberOfItems { get; set; }
-        public List<PropertyListDTO> Items { get; set; }
+        public List<PropertyShowcaseResponseDTO> Items { get; set; }
     }
 }

@@ -1,8 +1,4 @@
-﻿using RealEstateApp.Api.DTO.PropertyFieldDTO;
-using RealEstateApp.Api.DTO.UserDTO;
-using RealEstateApp.Api.Entity;
-
-namespace RealEstateApp.Api.DTO.PropertyDTO
+﻿namespace RealEstateApp.Api.DTO.PropertyDTO
 {
     public class PropertyGetByIdResponseDTO : BaseDTO.BaseDTO
     {
@@ -11,11 +7,10 @@ namespace RealEstateApp.Api.DTO.PropertyDTO
         public string EndDate { get; set; }
         public float Latitude { get; set; }
         public float Longitude { get; set; }
-        public PropertyFieldInfoDTO<Currency> Currency { get; set; }
-        public PropertyFieldInfoDTO<PropertyStatus> PropertyStatus { get; set; }
-        public PropertyFieldInfoDTO<PropertyType> PropertyType { get; set; }
-        public List<PropertyFieldInfoDTO<PropertyImage>> PropertyImages { get; set; }
-        public UserInfoDTO User { get; set; }
+        public string Currency { get; set; }
+        public string Status { get; set; }
+        public string Type { get; set; }
+        public List<string> Images { get; set; }
 
     }
 }

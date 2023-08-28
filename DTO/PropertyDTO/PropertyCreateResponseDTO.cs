@@ -11,6 +11,7 @@
         public int TypeId { get; set; }
         public int StatusId { get; set; }
         public int CurrencyId { get; set; }
+        public string Thumbnail { get; set; }
         public List<string> Images { get; set; }
     }
 }

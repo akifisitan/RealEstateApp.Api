@@ -6,9 +6,9 @@ using RealEstateApp.Api.DatabaseContext;
 using RealEstateApp.Api.DTO;
 using RealEstateApp.Api.DTO.PropertyDTO;
 using RealEstateApp.Api.DTO.PropertyFieldDTO;
-using RealEstateApp.Api.DTO.UserDTO;
 using RealEstateApp.Api.Entity;
 using RealEstateApp.Api.Enums;
+using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace RealEstateApp.Api.Controllers
 {
@@ -23,84 +23,6 @@ namespace RealEstateApp.Api.Controllers
         public PropertyController(RealEstateContext context)
         {
             _context = context;
-        }
-
-        [HttpGet]
-        [Route("getById")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var result = await _context.Properties.AsNoTracking()
-                .Where(x => x.Id == id && x.Status != (int)EntityStatus.Deleted)
-                .Include(x => x.PropertyImages)
-                .Include(x => x.User)
-                .Include(x => x.Currency)
-                .Include(x => x.PropertyStatus)
-                .Include(x => x.PropertyType)
-                .FirstOrDefaultAsync();
-
-            if (result == null) return NotFound();
-            
-            var images = new List<PropertyFieldInfoDTO<PropertyImage>>();
-            foreach (var image in result.PropertyImages)
-            {
-                images.Add(new PropertyFieldInfoDTO<PropertyImage>(image));
-            }
-            var responseDTO = new PropertyGetByIdResponseDTO
-            {
-                Id = result.Id,
-                Price = result.Price,
-                StartDate = result.StartDate.ToShortDateString(),
-                EndDate = result.EndDate.ToShortDateString(),
-                Latitude = result.Latitude,
-                Longitude = result.Longitude,
-                PropertyImages = images,
-                PropertyStatus = new PropertyFieldInfoDTO<PropertyStatus>(result.PropertyStatus),
-                PropertyType = new PropertyFieldInfoDTO<PropertyType>(result.PropertyType),
-                Currency = new PropertyFieldInfoDTO<Currency>(result.Currency),
-                User = new UserInfoDTO(result.User)
-            };
-            return Ok(responseDTO);
-        }
-
-        [Authorize(Roles = UserRoles.User)]
-        [HttpGet]
-        [Route("getAllByUserId")]
-        public async Task<IActionResult> GetAllByUserId()
-        {
-            int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
-            var result = await _context.Properties.AsNoTracking()
-                .Where(x => x.UserId == userId && x.Status != (int)EntityStatus.Deleted)
-                .Include(x => x.PropertyImages)
-                .Include(x => x.User)
-                .Include(x => x.Currency)
-                .Include(x => x.PropertyStatus)
-                .Include(x => x.PropertyType)
-                .ToListAsync();
-
-            if (result == null) return NotFound();
-
-            var responseDTO = new List<PropertyListDTO>();
-            foreach (var property in result)
-            {
-                var image = new PropertyFieldInfoDTO<PropertyImage>
-                {
-                    Value = property.PropertyImages.First().Value
-                };
-
-                var dto = new PropertyListDTO
-                {
-                    Id = property.Id,
-                    Thumbnail = image.Value,
-                    Status = property.PropertyStatus.Value,
-                    Type = property.PropertyType.Value,
-                    Currency = property.Currency.Value,
-                    Price = property.Price,
-                    Latitude = property.Latitude,
-                    Longitude = property.Longitude
-                };
-                responseDTO.Add(dto);
-            }
-            return Ok(responseDTO);
         }
 
         [HttpGet]
@@ -142,6 +64,168 @@ namespace RealEstateApp.Api.Controllers
         }
 
         [HttpGet]
+        [Route("getById")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _context.Properties.AsNoTracking()
+                .Where(x => x.Id == id && x.Status != (int)EntityStatus.Deleted)
+                .Include(x => x.PropertyImages)
+                .Include(x => x.Currency)
+                .Include(x => x.PropertyStatus)
+                .Include(x => x.PropertyType)
+                .FirstOrDefaultAsync();
+
+            if (result == null) return NotFound();
+
+            var images = new List<string>();
+            foreach (var image in result.PropertyImages)
+            {
+                if (image.Status != (int)EntityStatus.Deleted)
+                    images.Add(image.Value);
+            }
+            var responseDTO = new PropertyGetByIdResponseDTO
+            {
+                Id = result.Id,
+                Price = result.Price,
+                StartDate = result.StartDate.ToShortDateString(),
+                EndDate = result.EndDate.ToShortDateString(),
+                Latitude = result.Latitude,
+                Longitude = result.Longitude,
+                Images = images,
+                Status = result.PropertyStatus.Value,
+                Type = result.PropertyType.Value,
+                Currency = result.Currency.Value,
+            };
+            return Ok(responseDTO);
+        }
+
+        [Authorize(Roles = UserRoles.User)]
+        [HttpGet]
+        [Route("getUserShowcaseData")]
+        public async Task<IActionResult> GetUserShowcaseData()
+        {
+            int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
+            var result = await _context.Properties.AsNoTracking()
+                .Where(x => x.UserId == userId && x.Status != (int)EntityStatus.Deleted)
+                .Include(x => x.Currency)
+                .Include(x => x.PropertyStatus)
+                .Include(x => x.PropertyType)
+                .ToListAsync();
+
+            if (result == null) return NotFound();
+
+            var responseDTO = new List<PropertyShowcaseResponseDTO>();
+            foreach (var property in result)
+            {
+                var dto = new PropertyShowcaseResponseDTO
+                {
+                    Id = property.Id,
+                    Thumbnail = property.Thumbnail,
+                    Status = property.PropertyStatus.Value,
+                    Type = property.PropertyType.Value,
+                    Currency = property.Currency.Value,
+                    Price = property.Price,
+                };
+                responseDTO.Add(dto);
+            }
+            return Ok(responseDTO);
+        }
+
+        [HttpGet]
+        [Route("getAllShowcaseData")]
+        public async Task<IActionResult> GetAllShowcaseData()
+        {
+            var result = await _context.Properties.AsNoTracking()
+                .Where(x => x.Status != (int)EntityStatus.Deleted)
+                .Include(x => x.Currency)
+                .Include(x => x.PropertyStatus)
+                .Include(x => x.PropertyType)
+                .ToListAsync();
+
+            if (result == null) return NotFound();
+
+            var responseDTO = new List<PropertyShowcaseResponseDTO>();
+            foreach (var property in result)
+            {
+                var dto = new PropertyShowcaseResponseDTO
+                {
+                    Id = property.Id,
+                    Thumbnail = property.Thumbnail,
+                    Status = property.PropertyStatus.Value,
+                    Type = property.PropertyType.Value,
+                    Currency = property.Currency.Value,
+                    Price = property.Price,
+                };
+                responseDTO.Add(dto);
+            }
+            return Ok(responseDTO);
+        }
+
+        [Authorize(Roles = UserRoles.User)]
+        [HttpGet]
+        [Route("getAllUserMapData")]
+        public async Task<IActionResult> GetAllUserMapData()
+        {
+            int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
+            var result = await _context.Properties.AsNoTracking()
+                .Where(x => x.UserId == userId && x.Status != (int)EntityStatus.Deleted)
+                .Include(x => x.Currency)
+                .Include(x => x.PropertyStatus)
+                .Include(x => x.PropertyType)
+                .ToListAsync();
+
+            if (result == null) return NotFound();
+
+            var responseDTO = new List<PropertyGetMapDataResponseDTO>();
+            foreach (var property in result)
+            {
+                var dto = new PropertyGetMapDataResponseDTO
+                {
+                    Id = property.Id,
+                    Status = property.PropertyStatus.Value,
+                    Type = property.PropertyType.Value,
+                    Currency = property.Currency.Value,
+                    Price = property.Price,
+                    Latitude = property.Latitude,
+                    Longitude = property.Longitude
+                };
+                responseDTO.Add(dto);
+            }
+            return Ok(responseDTO);
+        }
+
+        [HttpGet]
+        [Route("getAllMapData")]
+        public async Task<IActionResult> GetAllMapData()
+        {
+            var result = await _context.Properties.AsNoTracking()
+                .Where(x => x.Status != (int)EntityStatus.Deleted)
+                .Include(x => x.Currency)
+                .Include(x => x.PropertyStatus)
+                .Include(x => x.PropertyType)
+                .ToListAsync();
+
+            if (result == null) return NotFound();
+
+            var responseDTO = new List<PropertyGetMapDataResponseDTO>();
+            foreach (var property in result)
+            {
+                var dto = new PropertyGetMapDataResponseDTO
+                {
+                    Id = property.Id,
+                    Status = property.PropertyStatus.Value,
+                    Type = property.PropertyType.Value,
+                    Currency = property.Currency.Value,
+                    Price = property.Price,
+                    Latitude = property.Latitude,
+                    Longitude = property.Longitude
+                };
+                responseDTO.Add(dto);
+            }
+            return Ok(responseDTO);
+        }
+
+        [HttpGet]
         [Route("getPaginated")]
         public async Task<IActionResult> GetPaginated
             (int pageNumber, int? statusId, int? typeId, int? currencyId, int? minPrice, int? maxPrice
@@ -156,8 +240,6 @@ namespace RealEstateApp.Api.Controllers
                 .Where(x => x.PropertyStatusId == statusId || statusId == null)
                 .Where(x => x.CurrencyId == currencyId || currencyId == null)
                 .Where(x => x.Price >= minPrice && x.Price <= maxPrice)
-                .Include(x => x.PropertyImages)
-                .Include(x => x.User)
                 .Include(x => x.Currency)
                 .Include(x => x.PropertyStatus)
                 .Include(x => x.PropertyType);
@@ -171,23 +253,17 @@ namespace RealEstateApp.Api.Controllers
             {
                 return NotFound();
             }
-            var responseData = new List<PropertyListDTO>();
+            var responseData = new List<PropertyShowcaseResponseDTO>();
             foreach (var property in result)
             {
-                var image = new PropertyFieldInfoDTO<PropertyImage>
-                {
-                    Value = property.PropertyImages.First().Value
-                };
-                var dto = new PropertyListDTO
+                var dto = new PropertyShowcaseResponseDTO
                 {
                     Id = property.Id,
-                    Thumbnail = image.Value,
+                    Thumbnail = property.Thumbnail,
                     Status = property.PropertyStatus.Value,
                     Type = property.PropertyType.Value,
                     Currency = property.Currency.Value,
                     Price = property.Price,
-                    Latitude = property.Latitude,
-                    Longitude = property.Longitude
                 };
                 responseData.Add(dto);
             }
@@ -200,6 +276,48 @@ namespace RealEstateApp.Api.Controllers
                 ItemsPerPage = itemsPerPage
             };
             return Ok(responseDTO);
+        }
+
+        [HttpPost]
+        [Route("migrateOldImages")]
+        public async Task<IActionResult> Test()
+        {
+            var result = await _context.Properties
+                .Where(x => x.Status != (int)EntityStatus.Deleted)
+                .Include(x => x.PropertyImages)
+                .Include(x => x.Currency)
+                .Include(x => x.PropertyStatus)
+                .Include(x => x.PropertyType)
+                .ToListAsync();
+
+            if (result == null) return NotFound();
+
+            foreach (var property in result)
+            {
+                foreach (var image in property.PropertyImages)
+                {
+                    if (!image.Value.StartsWith("data:image"))
+                    {
+                        var imageBytes = Convert.FromBase64String(image.Value);
+                        using MemoryStream memoryStream = new(imageBytes);
+                        using var imageInstance = Image.Load(memoryStream.ToArray());
+                        imageInstance.Mutate(x => x.Resize(500, 0));
+                        image.Value = imageInstance.ToBase64String(JpegFormat.Instance);
+                    }
+                }
+                var dataBase64String = property.PropertyImages.First().Value;
+                var base64String = dataBase64String.Split(',')[1];
+                var thumbnailBytes = Convert.FromBase64String(base64String);
+                using MemoryStream thumbnailStream = new(thumbnailBytes);
+
+                using var thumbnail = Image.Load(thumbnailStream.ToArray());
+                thumbnail.Mutate(x => x.Resize(320, 240, KnownResamplers.Lanczos3));
+                var thumbnailString = thumbnail.ToBase64String(JpegFormat.Instance);
+                property.Thumbnail = thumbnailString;
+                await _context.SaveChangesAsync();
+            }
+            return Ok();
+
         }
 
         [Authorize(Roles = UserRoles.User)]
@@ -278,19 +396,11 @@ namespace RealEstateApp.Api.Controllers
                 response.Message = "Please make sure the start date is earlier than the end date.";
                 return BadRequest(response);
             }
-            int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
-            var newProperty = new Property
+            if (request.Photos.Count < 1)
             {
-                StartDate = parsedStartDate,
-                EndDate = parsedEndDate,
-                Latitude = request.Latitude,
-                Longitude = request.Longitude,
-                PropertyTypeId = request.PropertyTypeId,
-                PropertyStatusId = request.PropertyStatusId,
-                CurrencyId = request.CurrencyId,
-                Price = request.Price,
-                UserId = userId
-            };
+                response.Message = "Please upload at least one photo.";
+                return BadRequest(response);
+            }
             var imageStrings = new List<string>();
             foreach (var file in request.Photos)
             {
@@ -299,15 +409,16 @@ namespace RealEstateApp.Api.Controllers
                     using var memoryStream = new MemoryStream();
                     await file.CopyToAsync(memoryStream);
 
-                    // upload the file if less than 4 mb  
-                    if (memoryStream.Length < 4 * 1024 * 1024)
+                    if (memoryStream.Length < 2 * 1024 * 1024)
                     {
-                        var photo = Convert.ToBase64String(memoryStream.ToArray());
-                        imageStrings.Add(photo);
+                        using var image = Image.Load(memoryStream.ToArray());
+                        image.Mutate(x => x.Resize(500, 0));
+                        var b64 = image.ToBase64String(JpegFormat.Instance);
+                        imageStrings.Add(b64);
                     }
                     else
                     {
-                        response.Message = "One or more of the files is too large.";
+                        response.Message = "One or more of the uploaded images is too large.";
                         return BadRequest(response);
                     }
                 }
@@ -317,6 +428,29 @@ namespace RealEstateApp.Api.Controllers
                 response.Message = "Please upload at least one image.";
                 return BadRequest(response);
             }
+
+            using var thumbnailStream = new MemoryStream();
+            await request.Photos[0].CopyToAsync(thumbnailStream);
+
+            using var thumbnail = Image.Load(thumbnailStream.ToArray());
+            thumbnail.Mutate(x => x.Resize(320, 240, KnownResamplers.Lanczos3));
+            var thumbnailString = thumbnail.ToBase64String(JpegFormat.Instance);
+
+
+            int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
+            var newProperty = new Property
+            {
+                StartDate = parsedStartDate,
+                EndDate = parsedEndDate,
+                Thumbnail = thumbnailString,
+                Latitude = request.Latitude,
+                Longitude = request.Longitude,
+                PropertyTypeId = request.PropertyTypeId,
+                PropertyStatusId = request.PropertyStatusId,
+                CurrencyId = request.CurrencyId,
+                Price = request.Price,
+                UserId = userId
+            };
             var addedProperty = _context.Properties.Add(newProperty);
             await _context.SaveChangesAsync();
             var propertyId = addedProperty.Entity.Id;
@@ -335,6 +469,7 @@ namespace RealEstateApp.Api.Controllers
                 Id = propertyId,
                 StartDate = parsedStartDate,
                 EndDate = parsedEndDate,
+                Thumbnail = thumbnailString,
                 Latitude = request.Latitude,
                 Longitude = request.Longitude,
                 TypeId = request.PropertyTypeId,
@@ -345,128 +480,86 @@ namespace RealEstateApp.Api.Controllers
                 Images = imageStrings
             };
             response.Data = data;
-            response.Message = "Property Creation Successful.";
+            response.Message = "Property created successfully.";
             return Ok(response);
         }
 
         [Authorize(Roles = UserRoles.User)]
         [HttpPut]
-        public async Task<IActionResult> Update([FromForm] PropertyUpdateRequestDTO request)
+        public async Task<IActionResult> Update([FromBody] PropertyUpdateRequestDTO request)
         {
             var response = new GenericResponse<PropertyUpdateResponseDTO>();
-            var item = await _context.Properties
+            var property = await _context.Properties
                 .Where(x => x.Id == request.Id && x.Status != (int)EntityStatus.Deleted)
-                .Include(x => x.PropertyImages)
                 .Include(x => x.User)
                 .Include(x => x.Currency)
                 .Include(x => x.PropertyStatus)
                 .Include(x => x.PropertyType)
                 .SingleOrDefaultAsync();
 
-            if (item == null)
+            if (property == null)
             {
                 response.Message = "No property found with the given id.";
                 return NotFound(response);
             }
             int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
-            if (userId != item.UserId && !User.IsInRole(UserRoles.Admin))
+            if (userId != property.UserId && !User.IsInRole(UserRoles.Admin))
             {
                 response.Message = "You are not authorized to update this property.";
                 return Unauthorized(response);
             }
-            if (!DateTime.TryParseExact(request.StartDate, "dd/MM/yyyy",
+            var valid = DateTime.TryParseExact(request.EndDate, "dd/MM/yyyy",
                 System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out DateTime parsedStartDate) ||
-                !DateTime.TryParseExact(request.EndDate, "dd/MM/yyyy",
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out DateTime parsedEndDate))
+                System.Globalization.DateTimeStyles.None, out DateTime parsedEndDate);
+            if (request.EndDate != null && !valid)
             {
-                response.Message = "Please enter a valid date in MM/dd/yyyy format.";
+                response.Message = "Please enter a valid date in dd/MM/yyyy format.";
                 return BadRequest(response);
             }
-            if (parsedStartDate > parsedEndDate)
+            if (valid && property.StartDate > parsedEndDate)
             {
-                response.Message = "Please make sure the start date is earlier than the end date.";
+                response.Message = "Please make sure the end date is later than the start date.";
                 return BadRequest(response);
             }
-            var imageStrings = new List<string>();
-
-            if (request.Photos != null)
+            else
             {
-                foreach (var file in request.Photos)
+                property.EndDate = parsedEndDate;
+            }
+            property.Price = request.Price ?? property.Price;
+            property.Latitude = request.Latitude ?? property.Latitude;
+            property.Longitude = request.Longitude ?? property.Longitude;
+            if (request.PropertyTypeId != null)
+            {
+                var propertyType = _context.PropertyTypes.SingleOrDefault(x => x.Id == request.PropertyTypeId && x.Status != (int)EntityStatus.Deleted);
+                if (propertyType == null)
                 {
-                    if (file.Length > 0)
-                    {
-                        using var memoryStream = new MemoryStream();
-                        await file.CopyToAsync(memoryStream);
-
-                        // upload the file if less than 4 mb  
-                        if (memoryStream.Length < 4 * 1024 * 1024)
-                        {
-                            var photo = Convert.ToBase64String(memoryStream.ToArray());
-                            imageStrings.Add(photo);
-                        }
-                        else
-                        {
-                            response.Message = "One or more of the images is too large.";
-                            return BadRequest(response);
-                        }
-                    }
-                }
-                if (imageStrings.Count == 0)
-                {
-                    response.Message = "Please upload at least one image.";
+                    response.Message = "Please enter a valid property type id.";
                     return BadRequest(response);
                 }
-                foreach (var imageString in imageStrings)
-                {
-                    var newImage = new PropertyImage
-                    {
-                        PropertyId = request.Id,
-                        Value = imageString
-                    };
-                    _context.PropertyImages.Add(newImage);
-                }
+                property.PropertyTypeId = propertyType.Id;
             }
-            var propertyImages = new List<string>();
-            foreach (var image in item.PropertyImages)
+            if (request.PropertyStatusId != null)
             {
-                propertyImages.Add(image.Value);
-            }
-            if (imageStrings.Count > 0)
-            {
-                foreach (var image in imageStrings)
+                var propertyStatus = _context.PropertyStatuses.SingleOrDefault(x => x.Id == request.PropertyStatusId && x.Status != (int)EntityStatus.Deleted);
+                if (propertyStatus == null)
                 {
-                    propertyImages.Add(image);
+                    response.Message = "Please enter a valid property status id.";
+                    return BadRequest(response);
                 }
+                property.PropertyStatusId = propertyStatus.Id;
             }
-            item.Price = request.Price != null ? (int)request.Price : item.Price;
-            item.StartDate = parsedStartDate;
-            item.EndDate = parsedEndDate;
-            item.Latitude = request.Latitude != null ? (float)request.Latitude : item.Latitude;
-            item.Longitude = request.Longitude != null ? (float)request.Longitude : item.Longitude;
-            item.PropertyTypeId = request.PropertyTypeId != null ? (int)request.PropertyTypeId : item.PropertyTypeId;
-            item.PropertyTypeId = request.PropertyTypeId != null ? (int)request.PropertyTypeId : item.PropertyTypeId;
-            item.PropertyStatusId = request.PropertyStatusId != null ? (int)request.PropertyStatusId : item.PropertyStatusId;
-            item.CurrencyId = request.CurrencyId != null ? (int)request.CurrencyId : item.CurrencyId;
+            if (request.CurrencyId != null)
+            {
+                var currency = _context.Currencies.SingleOrDefault(x => x.Id == request.CurrencyId && x.Status != (int)EntityStatus.Deleted);
+                if (currency == null)
+                {
+                    response.Message = "Please enter a valid currency id.";
+                    return BadRequest(response);
+                }
+                property.CurrencyId = currency.Id;
+            }
             await _context.SaveChangesAsync();
-
-            var data = new PropertyUpdateResponseDTO
-            {
-                Id = item.Id,
-                StartDate = parsedStartDate,
-                EndDate = parsedEndDate,
-                Latitude = item.Latitude,
-                Longitude = item.Longitude,
-                TypeId = item.PropertyTypeId,
-                StatusId = item.PropertyStatusId,
-                CurrencyId = item.CurrencyId,
-                Price = item.Price,
-                Images = propertyImages
-            };
-            response.Data = data;
-            response.Message = "Property Update Successful.";
-            return Ok(response);
+            return NoContent();
 
         }
 
@@ -478,9 +571,9 @@ namespace RealEstateApp.Api.Controllers
             var item = await _context.Properties
                 .SingleOrDefaultAsync(x => x.Id == id && x.Status != (int)EntityStatus.Deleted);
             if (item == null) return NotFound();
-            
+
             if (item.UserId != userId && !User.IsInRole(UserRoles.Admin)) return Unauthorized();
-            
+
             item.Status = (int)EntityStatus.Deleted;
             await _context.SaveChangesAsync();
             return NoContent();

@@ -23,7 +23,6 @@ namespace RealEstateApp.Api.Controllers
             _set = _context.PropertyTypes;
         }
 
-        [Authorize(Roles = UserRoles.User)]
         [HttpGet]
         [Route("list")]
         public async Task<IActionResult> GetAll()

@@ -2,8 +2,9 @@
 
 namespace RealEstateApp.Api.DTO.PropertyDTO
 {
-    public class PropertyCreateResponseDTO : BaseDTO.BaseDTO
+    public class PropertyCreateResponseDTO
     {
+        public int Id { get; set; }
         public int Price { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }

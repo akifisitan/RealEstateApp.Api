@@ -25,7 +25,7 @@ namespace RealEstateApp.Api.Controllers
 
         [HttpGet]
         [Route("list")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> List()
         {
             var result = await _set
                 .AsNoTracking()

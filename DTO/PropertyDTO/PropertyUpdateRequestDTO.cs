@@ -1,7 +1,8 @@
 ﻿namespace RealEstateApp.Api.DTO.PropertyDTO
 {
-    public class PropertyUpdateRequestDTO : BaseDTO.BaseDTO
+    public class PropertyUpdateRequestDTO
     {
+        public int Id { get; set; }
         public string? EndDate { get; set; }
         public float? Latitude { get; set; }
         public float? Longitude { get; set; }

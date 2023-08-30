@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RealEstateApp.Api.Auth;
 using RealEstateApp.Api.DatabaseContext;
-using RealEstateApp.Api.DTO.PropertyDTO;
 using RealEstateApp.Api.DTO.PropertyFieldDTO;
+using RealEstateApp.Api.DTO.PropertyImageDTO;
 using RealEstateApp.Api.Entity;
 using RealEstateApp.Api.Enums;
 using SixLabors.ImageSharp.Formats.Jpeg;
@@ -18,10 +18,30 @@ namespace RealEstateApp.Api.Controllers
     {
 
         private readonly RealEstateContext _context;
+        private readonly DbSet<PropertyImage> _set;
 
         public PropertyImageController(RealEstateContext context)
         {
             _context = context;
+            _set = _context.PropertyImages;
+        }
+
+        [HttpGet]
+        [Route("list")]
+        public async Task<IActionResult> List()
+        {
+            var result = await _set
+                .AsNoTracking()
+                .Where(p => p.Status != (int)EntityStatus.Deleted)
+                .ToListAsync();
+
+            if (result == null)
+                return NotFound();
+
+            var imageInfoList = new List<PropertyFieldInfoDTO<PropertyImage>>();
+            result.ForEach(image => imageInfoList.Add(new PropertyFieldInfoDTO<PropertyImage>(image)));
+
+            return Ok(imageInfoList);
         }
 
         [Authorize(Roles = UserRoles.User)]

@@ -2,8 +2,9 @@
 
 namespace RealEstateApp.Api.DTO.PropertyFieldDTO
 {
-    public class PropertyFieldInfoDTO<T> : BaseDTO.BaseDTO where T : PropertyFieldBase
+    public class PropertyFieldInfoDTO<T> where T : PropertyFieldBase
     {
+        public int Id { get; set; }
         public string Value { get; set; }
 
         public PropertyFieldInfoDTO()

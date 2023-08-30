@@ -1,4 +1,4 @@
-﻿namespace RealEstateApp.Api.DTO.PropertyDTO
+﻿namespace RealEstateApp.Api.DTO.PropertyImageDTO
 {
     public class PropertyImageRequestDTO
     {

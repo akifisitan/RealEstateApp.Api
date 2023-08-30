@@ -1,7 +1,8 @@
 ﻿namespace RealEstateApp.Api.DTO.PropertyFieldDTO
 {
-    public class PropertyFieldUpdateRequestDTO : BaseDTO.BaseDTO
+    public class PropertyFieldUpdateRequestDTO
     {
+        public int Id { get; set; }
         public string Value { get; set; }
 
         public PropertyFieldUpdateRequestDTO()

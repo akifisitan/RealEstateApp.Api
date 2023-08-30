@@ -74,16 +74,16 @@ namespace RealEstateApp.Api.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO model)
         {
             if (model.Username == null || model.Email == null || model.Password == null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed. Please check user details and try again." });
             model.Username = model.Username.Trim();
             model.Email = model.Email.Trim();
             model.Password = model.Password.Trim();
             var userExists = await _userManager.FindByNameAsync(model.Username);
             if (userExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User already exists!" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User already exists." });
 
             if (model.Username == null || model.Email == null || model.Password == null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed. Please check user details and try again." });
 
             IdentityUser user = new()
             {
@@ -93,7 +93,7 @@ namespace RealEstateApp.Api.Controllers
             };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed. Please check user details and try again." });
 
             await _userManager.AddToRoleAsync(user, UserRoles.User);
 
@@ -106,7 +106,7 @@ namespace RealEstateApp.Api.Controllers
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            return Ok(new ResponseDTO { Status = "Success", Message = "User created successfully!" });
+            return Ok(new ResponseDTO { Status = "Success", Message = "User created successfully." });
         }
 
         [HttpPost]
@@ -114,13 +114,13 @@ namespace RealEstateApp.Api.Controllers
         public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequestDTO model)
         {
             if (model.Username == null || model.Email == null || model.Password == null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed. Please check user details and try again." });
             model.Username = model.Username.Trim();
             model.Email = model.Email.Trim();
             model.Password = model.Password.Trim();
             var userExists = await _userManager.FindByNameAsync(model.Username);
             if (userExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User already exists!" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User already exists." });
 
             IdentityUser user = new()
             {
@@ -130,7 +130,7 @@ namespace RealEstateApp.Api.Controllers
             };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed. Please check user details and try again." });
 
             if (!await _roleManager.RoleExistsAsync(UserRoles.Admin))
                 await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
@@ -154,7 +154,7 @@ namespace RealEstateApp.Api.Controllers
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            return Ok(new ResponseDTO { Status = "Success", Message = "User created successfully!" });
+            return Ok(new ResponseDTO { Status = "Success", Message = "User created successfully." });
         }
 
         [HttpPost]
@@ -165,10 +165,10 @@ namespace RealEstateApp.Api.Controllers
             roleName = roleName.Trim();
             if (await _roleManager.RoleExistsAsync(roleName))
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "Role already exists!" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "Role already exists." });
             }
             await _roleManager.CreateAsync(new IdentityRole(roleName));
-            return Ok(new ResponseDTO { Status = "Success", Message = "Role created successfully!" });
+            return Ok(new ResponseDTO { Status = "Success", Message = "Role created successfully." });
         }
 
         [HttpPost]
@@ -179,10 +179,10 @@ namespace RealEstateApp.Api.Controllers
             roleName = roleName.Trim();
             if (!await _roleManager.RoleExistsAsync(roleName))
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "Role does not exist!" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "Role does not exist." });
             }
             await _roleManager.DeleteAsync(new IdentityRole(roleName));
-            return Ok(new ResponseDTO { Status = "Success", Message = "Role deleted successfully!" });
+            return Ok(new ResponseDTO { Status = "Success", Message = "Role deleted successfully." });
         }
 
         [HttpPost]
@@ -192,14 +192,14 @@ namespace RealEstateApp.Api.Controllers
         {
             var user = await _userManager.FindByNameAsync(username);
             if (user == null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User does not exist!" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User does not exist." });
             roleName = roleName.Trim();
             if (await _roleManager.RoleExistsAsync(roleName))
             {
                 await _userManager.AddToRoleAsync(user, roleName);
-                return Ok(new ResponseDTO { Status = "Success", Message = "Role assigned successfully!" });
+                return Ok(new ResponseDTO { Status = "Success", Message = "Role assigned successfully." });
             }
-            return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "Role does not exist!" });
+            return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "Role does not exist." });
         }
 
         private JwtSecurityToken GetToken(List<Claim> authClaims)
@@ -209,7 +209,7 @@ namespace RealEstateApp.Api.Controllers
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
-                expires: DateTime.Now.AddHours(3),
+                expires: DateTime.UtcNow.AddHours(6),
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
             );

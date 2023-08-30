@@ -26,8 +26,8 @@ namespace RealEstateApp.Api.Controllers
         }
 
         [HttpGet]
-        [Route("getAll")]
-        public async Task<IActionResult> GetAll()
+        [Route("list")]
+        public async Task<IActionResult> List()
         {
             var result = await _context.Properties.AsNoTracking()
                 .Where(x => x.Status != (int)EntityStatus.Deleted)
@@ -83,7 +83,7 @@ namespace RealEstateApp.Api.Controllers
                 if (image.Status != (int)EntityStatus.Deleted)
                     images.Add(image.Value);
             }
-            var responseDTO = new PropertyGetByIdResponseDTO
+            var responseDTO = new PropertyDetailedResponseDTO
             {
                 Id = result.Id,
                 Price = result.Price,
@@ -227,27 +227,27 @@ namespace RealEstateApp.Api.Controllers
 
         [HttpGet]
         [Route("getPaginated")]
-        public async Task<IActionResult> GetPaginated
-            (int pageNumber, int? statusId, int? typeId, int? currencyId, int? minPrice, int? maxPrice
-            )
+        public async Task<IActionResult> GetPaginated([FromQuery] PropertyGetPaginatedRequestDTO request)
         {
-            minPrice ??= 0;
-            maxPrice ??= int.MaxValue;
-            int itemsPerPage = 30;
-            var query = _context.Properties.AsNoTracking()
+            var minPrice = request.MinPrice ?? 0;
+            var maxPrice = request.MaxPrice ?? int.MaxValue;
+            var pageSize = request.PageSize ?? 5;
+            var pageNumber = request.Page ?? 1;
+            var query = _context.Properties
+                .AsNoTracking()
                 .Where(x => x.Status != (int)EntityStatus.Deleted)
-                .Where(x => x.PropertyTypeId == typeId || typeId == null)
-                .Where(x => x.PropertyStatusId == statusId || statusId == null)
-                .Where(x => x.CurrencyId == currencyId || currencyId == null)
+                .Where(x => x.PropertyTypeId == request.TypeId || request.TypeId == null)
+                .Where(x => x.PropertyStatusId == request.StatusId || request.StatusId == null)
+                .Where(x => x.CurrencyId == request.CurrencyId || request.CurrencyId == null)
                 .Where(x => x.Price >= minPrice && x.Price <= maxPrice)
                 .Include(x => x.Currency)
                 .Include(x => x.PropertyStatus)
                 .Include(x => x.PropertyType);
 
             var totalItems = await query.CountAsync();
-            var numberOfPages = (int)Math.Ceiling((double)totalItems / itemsPerPage);
+            var numberOfPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
-            var result = await query.Skip(itemsPerPage * (pageNumber - 1)).Take(itemsPerPage).ToListAsync();
+            var result = await query.Skip(pageSize * (pageNumber - 1)).Take(pageSize).ToListAsync();
 
             if (result == null)
             {
@@ -272,53 +272,51 @@ namespace RealEstateApp.Api.Controllers
                 Items = responseData,
                 NumberOfPages = numberOfPages,
                 CurrentPage = pageNumber,
-                NumberOfItems = responseData.Count,
-                ItemsPerPage = itemsPerPage
             };
             return Ok(responseDTO);
         }
 
-        [HttpPost]
-        [Route("migrateOldImages")]
-        public async Task<IActionResult> Test()
-        {
-            var result = await _context.Properties
-                .Where(x => x.Status != (int)EntityStatus.Deleted)
-                .Include(x => x.PropertyImages)
-                .Include(x => x.Currency)
-                .Include(x => x.PropertyStatus)
-                .Include(x => x.PropertyType)
-                .ToListAsync();
+        //[HttpPost]
+        //[Route("migrateOldImages")]
+        //public async Task<IActionResult> Test()
+        //{
+        //    var result = await _context.Properties
+        //        .Where(x => x.Status != (int)EntityStatus.Deleted)
+        //        .Include(x => x.PropertyImages)
+        //        .Include(x => x.Currency)
+        //        .Include(x => x.PropertyStatus)
+        //        .Include(x => x.PropertyType)
+        //        .ToListAsync();
 
-            if (result == null) return NotFound();
+        //    if (result == null) return NotFound();
 
-            foreach (var property in result)
-            {
-                foreach (var image in property.PropertyImages)
-                {
-                    if (!image.Value.StartsWith("data:image"))
-                    {
-                        var imageBytes = Convert.FromBase64String(image.Value);
-                        using MemoryStream memoryStream = new(imageBytes);
-                        using var imageInstance = Image.Load(memoryStream.ToArray());
-                        imageInstance.Mutate(x => x.Resize(500, 0));
-                        image.Value = imageInstance.ToBase64String(JpegFormat.Instance);
-                    }
-                }
-                var dataBase64String = property.PropertyImages.First().Value;
-                var base64String = dataBase64String.Split(',')[1];
-                var thumbnailBytes = Convert.FromBase64String(base64String);
-                using MemoryStream thumbnailStream = new(thumbnailBytes);
+        //    foreach (var property in result)
+        //    {
+        //        foreach (var image in property.PropertyImages)
+        //        {
+        //            if (!image.Value.StartsWith("data:image"))
+        //            {
+        //                var imageBytes = Convert.FromBase64String(image.Value);
+        //                using MemoryStream memoryStream = new(imageBytes);
+        //                using var imageInstance = Image.Load(memoryStream.ToArray());
+        //                imageInstance.Mutate(x => x.Resize(500, 0));
+        //                image.Value = imageInstance.ToBase64String(JpegFormat.Instance);
+        //            }
+        //        }
+        //        var dataBase64String = property.PropertyImages.First().Value;
+        //        var base64String = dataBase64String.Split(',')[1];
+        //        var thumbnailBytes = Convert.FromBase64String(base64String);
+        //        using MemoryStream thumbnailStream = new(thumbnailBytes);
 
-                using var thumbnail = Image.Load(thumbnailStream.ToArray());
-                thumbnail.Mutate(x => x.Resize(320, 240, KnownResamplers.Lanczos3));
-                var thumbnailString = thumbnail.ToBase64String(JpegFormat.Instance);
-                property.Thumbnail = thumbnailString;
-                await _context.SaveChangesAsync();
-            }
-            return Ok();
+        //        using var thumbnail = Image.Load(thumbnailStream.ToArray());
+        //        thumbnail.Mutate(x => x.Resize(320, 240, KnownResamplers.Lanczos3));
+        //        var thumbnailString = thumbnail.ToBase64String(JpegFormat.Instance);
+        //        property.Thumbnail = thumbnailString;
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    return Ok();
 
-        }
+        //}
 
         [Authorize(Roles = UserRoles.User)]
         [HttpGet]
@@ -381,11 +379,11 @@ namespace RealEstateApp.Api.Controllers
         public async Task<IActionResult> Create([FromForm] PropertyCreateRequestDTO request)
         {
             var response = new GenericResponse<PropertyCreateResponseDTO>();
-            if (!DateTime.TryParseExact(request.EndDate, "dd/MM/yyyy",
+            if (!DateTime.TryParseExact(request.EndDate, "yyyy-MM-dd",
                 System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.None, out DateTime parsedEndDate))
             {
-                response.Message = "Please enter a valid date in dd/MM/yyyy format.";
+                response.Message = "Please enter a valid date in yyyy-MM-dd format.";
                 return BadRequest(response);
             }
             var startDate = DateTime.Now;
@@ -503,12 +501,12 @@ namespace RealEstateApp.Api.Controllers
             {
                 return Unauthorized("You are not authorized to update this property.");
             }
-            var valid = DateTime.TryParseExact(request.EndDate, "dd/MM/yyyy",
+            var valid = DateTime.TryParseExact(request.EndDate, "yyyy-MM-dd",
                 System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.None, out DateTime parsedEndDate);
             if (request.EndDate != null && !valid)
             {
-                return BadRequest("Please enter a valid date in dd/MM/yyyy format.");
+                return BadRequest("Please enter a valid date in yyyy-MM-dd format.");
             }
             if (valid && property.StartDate > parsedEndDate)
             {

@@ -19,4 +19,5 @@ username: admin
 password: Test123.
 
 - These can be overridden by editing the contents of the .env file.
+- Make sure to change the values of the .env file for production, these are just dummy values set for development.
 - Other values like the connection strings and passwords can be set via the .env file as well.

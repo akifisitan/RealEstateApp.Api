@@ -1,0 +1,8 @@
+ConnectionStrings__RealEstate="Data Source=ms-sql-db;Initial Catalog=RealEstate;User id=sa;Password=myDBpas12.WORD;TrustServerCertificate=True"
+ConnectionStrings__RealEstateIdentity="Data Source=ms-sql-db;Initial Catalog=RealEstateIdentity;User id=sa;Password=myDBpas12.WORD;TrustServerCertificate=True"
+JWT__ValidAudience="http://localhost:4200"
+JWT__ValidIssuer="http://localhost:5000"
+JWT__Secret="JWTAuthenticationHIGHsecuredPasswordVVVp1OH7Xzyr"
+Credentials__AdminEmail="admin@email.com"
+Credentials__AdminPassword="Test123."
+SA_PASSWORD="myDBpas12.WORD"

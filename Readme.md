@@ -1,14 +1,20 @@
+# Real Estate App Api
+
+- Backend for a Real Estate listing website [(SvelteRE)](https://github.com/akifisitan/SvelteRE/) built using the .NET 6 Web API template
+
 ## Usage
 
-1. Create a new file called .env and copy the contents of example-env into it or simply rename example-env to .env
+1. Setup [Docker](https://www.docker.com/)
 
-2. Open up a terminal in this directory and build the web api image
+2. Create a new file called .env and copy the contents of example-env into it or simply rename example-env to .env
+
+3. Open up a terminal in this directory and build the web api image
 
 ```bash
 docker build -t realestateapp-api .
 ```
 
-3. Create and run the containers
+4. Create and run the containers
 
 ```bash
 docker compose up

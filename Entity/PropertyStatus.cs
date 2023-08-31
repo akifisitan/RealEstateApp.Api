@@ -7,5 +7,15 @@
         {
             Value = status;
         }
+
+        public static List<PropertyStatus> GenerateDefault()
+        {
+            return new List<PropertyStatus>
+            {
+                new PropertyStatus("For Sale"),
+                new PropertyStatus("For Rent"),
+                new PropertyStatus("Sold")
+            };
+        }
     }
 }

@@ -11,7 +11,11 @@ services:
     environment:
       - ConnectionStrings__RealEstate=${ConnectionStrings__RealEstate}
       - ConnectionStrings__RealEstateIdentity=${ConnectionStrings__RealEstateIdentity}
+      - JWT__ValidAudience=${JWT__ValidAudience}
+      - JWT__ValidIssuer=${JWT__ValidIssuer}
       - JWT__Secret=${JWT__Secret}
+      - Credentials__AdminEmail=${Credentials__AdminEmail}
+      - Credentials__AdminPassword=${Credentials__AdminPassword}
 
   sql:
     image: "mcr.microsoft.com/mssql/server"

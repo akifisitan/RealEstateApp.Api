@@ -7,5 +7,17 @@
         {
             Value = type;
         }
+
+        public static List<PropertyType> GenerateDefault()
+        {
+            return new List<PropertyType>
+            {
+                new PropertyType("Apartment"),
+                new PropertyType("House"),
+                new PropertyType("Townhome"),
+                new PropertyType("Land"),
+                new PropertyType("Villa")
+            };
+        }
     }
 }

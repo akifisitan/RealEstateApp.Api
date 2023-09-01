@@ -2,7 +2,7 @@
 {
     public class PropertyCreateRequestDTO
     {
-        public List<IFormFile> Photos { get; set; }
+        public List<IFormFile> Images { get; set; }
         public string EndDate { get; set; }
         public float Latitude { get; set; }
         public float Longitude { get; set; }

@@ -46,7 +46,7 @@ namespace RealEstateApp.Api.Controllers
 
         [Authorize(Roles = UserRoles.User)]
         [HttpPost]
-        public async Task<IActionResult> Create(PropertyImageRequestDTO request)
+        public async Task<IActionResult> Create([FromForm] PropertyCreateImageRequestDTO request)
         {
             var property = _context.Properties
                 .SingleOrDefault(x => x.Id == request.PropertyId && x.Status != (int)EntityStatus.Deleted);
@@ -54,33 +54,39 @@ namespace RealEstateApp.Api.Controllers
 
             int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
             if (property.UserId != userId && !User.IsInRole(UserRoles.Admin)) return Unauthorized();
-
-            var file = request.Image;
-            if (file.Length > 0)
+            var images = new List<PropertyImage>();
+            foreach (var file in request.Images)
             {
-                using var memoryStream = new MemoryStream();
-                await file.CopyToAsync(memoryStream);
-                if (memoryStream.Length < 2 * 1024 * 1024)
+                if (file.Length > 0)
                 {
-                    using var newImage = Image.Load(memoryStream.ToArray());
-                    newImage.Mutate(x => x.Resize(500, 0));
-                    var newPropertyImage = new PropertyImage
+                    using var memoryStream = new MemoryStream();
+                    await file.CopyToAsync(memoryStream);
+                    if (memoryStream.Length < 2 * 1024 * 1024)
                     {
-                        PropertyId = request.PropertyId,
-                        Value = newImage.ToBase64String(JpegFormat.Instance)
-                    };
-                    _context.PropertyImages.Add(newPropertyImage);
-                    await _context.SaveChangesAsync();
-                    return Ok(new PropertyFieldInfoDTO<PropertyImage>(newPropertyImage));
+                        using var newImage = Image.Load(memoryStream.ToArray());
+                        newImage.Mutate(x => x.Resize(500, 0));
+                        var newPropertyImage = new PropertyImage
+                        {
+                            PropertyId = request.PropertyId,
+                            Value = newImage.ToBase64String(JpegFormat.Instance)
+                        };
+                        images.Add(newPropertyImage);
+                    }
                 }
             }
-            return BadRequest();
+            if (images.Count == 0) return BadRequest();
 
+            await _context.PropertyImages.AddRangeAsync(images);
+            await _context.SaveChangesAsync();
+            var responseDTO = new List<PropertyFieldInfoDTO<PropertyImage>>();
+            foreach (var item in images) responseDTO.Add(new PropertyFieldInfoDTO<PropertyImage>(item));
+
+            return Ok(responseDTO);
         }
 
         [Authorize(Roles = UserRoles.User)]
         [HttpPut]
-        public async Task<IActionResult> Update(PropertyImageRequestDTO request)
+        public async Task<IActionResult> Update([FromBody] PropertyUpdateImageRequestDTO request)
         {
             var image = await _context.PropertyImages
                 .SingleOrDefaultAsync(x => x.Id == request.PropertyId && x.Status != (int)EntityStatus.Deleted);

@@ -1,4 +1,7 @@
-﻿namespace RealEstateApp.Api.DTO.PropertyDTO
+﻿using RealEstateApp.Api.DTO.PropertyFieldDTO;
+using RealEstateApp.Api.Entity;
+
+namespace RealEstateApp.Api.DTO.PropertyDTO
 {
     public class PropertyDetailedResponseDTO
     {
@@ -11,7 +14,7 @@
         public string Currency { get; set; }
         public string Status { get; set; }
         public string Type { get; set; }
-        public List<string> Images { get; set; }
+        public List<PropertyFieldInfoDTO<PropertyImage>> Images { get; set; }
 
     }
 }

@@ -77,18 +77,20 @@ namespace RealEstateApp.Api.Controllers
 
             if (result == null) return NotFound();
 
-            var images = new List<string>();
+            var images = new List<PropertyFieldInfoDTO<PropertyImage>>();
             foreach (var image in result.PropertyImages)
             {
                 if (image.Status != (int)EntityStatus.Deleted)
-                    images.Add(image.Value);
+                {
+                    images.Add(new PropertyFieldInfoDTO<PropertyImage>(image));
+                }
             }
             var responseDTO = new PropertyDetailedResponseDTO
             {
                 Id = result.Id,
                 Price = result.Price,
-                StartDate = result.StartDate.ToShortDateString(),
-                EndDate = result.EndDate.ToShortDateString(),
+                StartDate = result.StartDate.ToString("yyyy-MM-dd"),
+                EndDate = result.EndDate.ToString("yyyy-MM-dd"),
                 Latitude = result.Latitude,
                 Longitude = result.Longitude,
                 Images = images,
@@ -276,48 +278,6 @@ namespace RealEstateApp.Api.Controllers
             return Ok(responseDTO);
         }
 
-        //[HttpPost]
-        //[Route("migrateOldImages")]
-        //public async Task<IActionResult> Test()
-        //{
-        //    var result = await _context.Properties
-        //        .Where(x => x.Status != (int)EntityStatus.Deleted)
-        //        .Include(x => x.PropertyImages)
-        //        .Include(x => x.Currency)
-        //        .Include(x => x.PropertyStatus)
-        //        .Include(x => x.PropertyType)
-        //        .ToListAsync();
-
-        //    if (result == null) return NotFound();
-
-        //    foreach (var property in result)
-        //    {
-        //        foreach (var image in property.PropertyImages)
-        //        {
-        //            if (!image.Value.StartsWith("data:image"))
-        //            {
-        //                var imageBytes = Convert.FromBase64String(image.Value);
-        //                using MemoryStream memoryStream = new(imageBytes);
-        //                using var imageInstance = Image.Load(memoryStream.ToArray());
-        //                imageInstance.Mutate(x => x.Resize(500, 0));
-        //                image.Value = imageInstance.ToBase64String(JpegFormat.Instance);
-        //            }
-        //        }
-        //        var dataBase64String = property.PropertyImages.First().Value;
-        //        var base64String = dataBase64String.Split(',')[1];
-        //        var thumbnailBytes = Convert.FromBase64String(base64String);
-        //        using MemoryStream thumbnailStream = new(thumbnailBytes);
-
-        //        using var thumbnail = Image.Load(thumbnailStream.ToArray());
-        //        thumbnail.Mutate(x => x.Resize(320, 240, KnownResamplers.Lanczos3));
-        //        var thumbnailString = thumbnail.ToBase64String(JpegFormat.Instance);
-        //        property.Thumbnail = thumbnailString;
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    return Ok();
-
-        //}
-
         [Authorize(Roles = UserRoles.User)]
         [HttpGet]
         [Route("getAnalyticsByUserId")]
@@ -410,13 +370,13 @@ namespace RealEstateApp.Api.Controllers
                 response.Message = "Please enter a valid currency id.";
                 return BadRequest(response);
             }
-            if (request.Photos.Count < 1)
+            if (request.Images.Count < 1)
             {
                 response.Message = "Please upload at least one image.";
                 return BadRequest(response);
             }
             var imageStrings = new List<string>();
-            foreach (var file in request.Photos)
+            foreach (var file in request.Images)
             {
                 if (file.Length > 0)
                 {
@@ -443,7 +403,7 @@ namespace RealEstateApp.Api.Controllers
                 return BadRequest(response);
             }
             using var thumbnailStream = new MemoryStream();
-            await request.Photos[0].CopyToAsync(thumbnailStream);
+            await request.Images[0].CopyToAsync(thumbnailStream);
             using var thumbnail = Image.Load(thumbnailStream.ToArray());
             thumbnail.Mutate(x => x.Resize(320, 240, KnownResamplers.Lanczos3));
 
@@ -501,19 +461,19 @@ namespace RealEstateApp.Api.Controllers
             {
                 return Unauthorized("You are not authorized to update this property.");
             }
-            var valid = DateTime.TryParseExact(request.EndDate, "yyyy-MM-dd",
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out DateTime parsedEndDate);
-            if (request.EndDate != null && !valid)
+            if (request.EndDate != null)
             {
-                return BadRequest("Please enter a valid date in yyyy-MM-dd format.");
-            }
-            if (valid && property.StartDate > parsedEndDate)
-            {
-                return BadRequest("Please make sure the end date is later than the start date.");
-            }
-            else
-            {
+                var valid = DateTime.TryParseExact(request.EndDate, "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out DateTime parsedEndDate);
+                if (!valid)
+                {
+                    return BadRequest("Please enter a valid date in yyyy-MM-dd format.");
+                }
+                if (property.StartDate >= parsedEndDate)
+                {
+                    return BadRequest("Please make sure the end date is later than the start date.");
+                }
                 property.EndDate = parsedEndDate;
             }
             property.Price = request.Price ?? property.Price;

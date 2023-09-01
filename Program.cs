@@ -104,9 +104,7 @@ var app = builder.Build();
 
 #region Migrate and Seed on Boot
 
-var migrateAndSeedOnBoot = true;
-
-if (migrateAndSeedOnBoot)
+if (!app.Environment.IsDevelopment())
 {
     Console.WriteLine("Migrating and seeding database...");
     using var scope = app.Services.CreateScope();

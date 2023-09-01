@@ -1,6 +1,6 @@
 # Real Estate App Api
 
-- Backend for a Real Estate listing website [(SvelteRE)](https://github.com/akifisitan/SvelteRE/) built using the .NET 6 Web API template
+- Backend API for [Real Estate listing website](https://github.com/akifisitan/RealEstateApp) built using the .NET 6 Web API template
 
 ## Usage
 

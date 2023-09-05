@@ -73,17 +73,16 @@ namespace RealEstateApp.Api.Controllers
         [Route("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO model)
         {
-            if (model.Username == null || model.Email == null || model.Password == null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed. Please check user details and try again." });
-            model.Username = model.Username.Trim();
-            model.Email = model.Email.Trim();
-            model.Password = model.Password.Trim();
+            if (!model.IsValid())
+                return BadRequest(new ResponseDTO { Status = "Error", Message = "User creation failed. Please check user details and try again." });
+
             var userExists = await _userManager.FindByNameAsync(model.Username);
             if (userExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User already exists." });
+                return Conflict(new ResponseDTO { Status = "Error", Message = "Username or email already in use." });
 
-            if (model.Username == null || model.Email == null || model.Password == null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User creation failed. Please check user details and try again." });
+            var emailExists = await _userManager.FindByEmailAsync(model.Email);
+            if (emailExists != null)
+                return Conflict(new ResponseDTO { Status = "Error", Message = "Username or email already in use." });
 
             IdentityUser user = new()
             {

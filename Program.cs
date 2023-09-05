@@ -6,13 +6,11 @@ using Microsoft.OpenApi.Models;
 using RealEstateApp.Api.Auth;
 using RealEstateApp.Api.DatabaseContext;
 using RealEstateApp.Api.Entity;
+using RealEstateApp.Api.Middleware;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
-
-
-// Add services to the container.
 
 #region Data Access
 
@@ -30,6 +28,8 @@ builder.Services.AddDbContext<RealEstateIdentityContext>(options => options.UseS
 #endregion
 
 #endregion
+
+#region Authentication and Authorization
 
 // For Identity
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
@@ -59,6 +59,9 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+#endregion
+
+#region Controllers and Endpoints
 
 builder.Services.AddControllers();
 
@@ -100,51 +103,56 @@ builder.Services.AddSwaggerGen(swagger =>
     });
 });
 
+#endregion
+
+#region Build App and Run
+
 var app = builder.Build();
+var logger = app.Logger;
 
 #region Migrate and Seed on Boot
 
 if (!app.Environment.IsDevelopment())
 {
-    Console.WriteLine("Migrating and seeding database...");
     using var scope = app.Services.CreateScope();
     var realEstateIdentityContext = scope.ServiceProvider.GetRequiredService<RealEstateIdentityContext>();
     var realEstateContext = scope.ServiceProvider.GetRequiredService<RealEstateContext>();
-    Console.WriteLine("Checking for pending migrations...");
+    logger.LogInformation("Checking for pending migrations...");
     var pendingMigrations = realEstateIdentityContext.Database.GetPendingMigrations().Any();
     if (!pendingMigrations)
     {
-        Console.WriteLine("No pending migrations.");
+        logger.LogInformation("No pending migrations.");
     }
     else
     {
-        Console.WriteLine("Migrating database...");
+        logger.LogInformation("Migrating database...");
         await realEstateContext.Database.MigrateAsync();
-        Console.WriteLine("Migration complete.");
+        logger.LogInformation("Migration complete.");
     }
+    logger.LogInformation("Checking for pending authentication migrations...");
     var pendingAuthMigrations = realEstateIdentityContext.Database.GetPendingMigrations().Any();
     if (!pendingAuthMigrations)
     {
-        Console.WriteLine("No pending authentication migrations.");
+        logger.LogInformation("No pending authentication migrations.");
     }
     else
     {
-        Console.WriteLine("Migrating authentication database...");
+        logger.LogInformation("Migrating authentication database...");
         await realEstateIdentityContext.Database.MigrateAsync();
-        Console.WriteLine("Auth migration complete.");
+        logger.LogInformation("Auth migration complete.");
     }
 
     // Seed database
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-    Console.WriteLine("Checking for admin account...");
+    logger.LogInformation("Checking for admin account...");
     var adminUser = await userManager.FindByNameAsync("admin");
     if (adminUser != null)
     {
-        Console.WriteLine("Admin account found, skipping authentication seeding.");
+        logger.LogInformation("Admin account found, skipping authentication seeding.");
     }
     else
     {
-        Console.WriteLine("Seeding database...");
+        logger.LogInformation("Seeding authentication database...");
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         var adminRole = await roleManager.FindByNameAsync(UserRoles.Admin);
@@ -163,7 +171,6 @@ if (!app.Environment.IsDevelopment())
         if (result.Succeeded)
         {
             await userManager.AddToRoleAsync(newAdminUser, UserRoles.Admin);
-            // Add the admin as a regular user
             var newUser = new User()
             {
                 Name = newAdminUser.UserName,
@@ -175,40 +182,40 @@ if (!app.Environment.IsDevelopment())
         }
         else
         {
-            Console.WriteLine("Error creating admin user:");
-            foreach (var error in result.Errors) Console.WriteLine(error.Description);
+            logger.LogInformation("Error creating admin user:");
+            foreach (var error in result.Errors) logger.LogError(error.Description);
         }
-        Console.WriteLine("Authentication seeding complete.");
+        logger.LogInformation("Authentication seeding complete.");
     }
 
     // Add default property types, statuses, and currencies
-    Console.WriteLine("Checking for default currencies, property types, and statuses...");
+    logger.LogInformation("Checking for default currencies, property types, and statuses...");
     var currencyExists = await realEstateContext.Currencies.AsNoTracking().AnyAsync();
     if (!currencyExists)
     {
         await realEstateContext.Currencies.AddRangeAsync(Currency.GenerateDefault());
         await realEstateContext.SaveChangesAsync();
-        Console.WriteLine("Default currencies added.");
+        logger.LogInformation("Default currencies added.");
     }
-    else Console.WriteLine("Default currencies already exist.");
+    else logger.LogInformation("Default currencies already exist.");
     var typeExists = await realEstateContext.PropertyTypes.AsNoTracking().AnyAsync();
     if (!typeExists)
     {
         await realEstateContext.PropertyTypes.AddRangeAsync(PropertyType.GenerateDefault());
         await realEstateContext.SaveChangesAsync();
-        Console.WriteLine("Default property types added.");
+        logger.LogInformation("Default property types added.");
     }
-    else Console.WriteLine("Default property types already exist.");
+    else logger.LogInformation("Default property types already exist.");
     var statusExists = await realEstateContext.PropertyStatuses.AsNoTracking().AnyAsync();
     if (!statusExists)
     {
         await realEstateContext.PropertyStatuses.AddRangeAsync(PropertyStatus.GenerateDefault());
         await realEstateContext.SaveChangesAsync();
-        Console.WriteLine("Default property statuses added.");
+        logger.LogInformation("Default property statuses added.");
     }
-    else Console.WriteLine("Default property statuses already exist.");
+    else logger.LogInformation("Default property statuses already exist.");
 
-    Console.WriteLine("Seeding process complete.");
+    logger.LogInformation("Seeding process complete.");
 }
 
 #endregion
@@ -220,6 +227,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Middleware
+app.UseTraceMiddleware();
+app.UsePerformanceMiddleware();
+app.UseExceptionHandlerMiddleware();
+
+// app.UseLoggingMiddleware();
 
 // Cors
 app.UseCors(x => x
@@ -230,8 +243,11 @@ app.UseCors(x => x
 
 // Authentication & Authorization
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
+
+#endregion

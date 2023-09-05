@@ -19,10 +19,12 @@ namespace RealEstateApp.Api.Controllers
     {
 
         private readonly RealEstateContext _context;
+        private readonly ILogger<PropertyController> _logger;
 
-        public PropertyController(RealEstateContext context)
+        public PropertyController(RealEstateContext context, ILogger<PropertyController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet]

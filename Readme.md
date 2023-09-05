@@ -6,7 +6,7 @@
 
 1. Setup [Docker](https://www.docker.com/)
 
-2. Create a new file called .env and copy the contents of example-env into it or simply rename example-env to .env
+2. Create a new file called .env and copy the contents of example-env into it or simply rename env.example to .env
 
 3. Open up a terminal in this directory and build the web api image
 

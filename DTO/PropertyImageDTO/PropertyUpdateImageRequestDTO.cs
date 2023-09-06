@@ -2,7 +2,7 @@
 {
     public class PropertyUpdateImageRequestDTO
     {
-        public int PropertyId { get; set; }
+        public int Id { get; set; }
         public IFormFile Image { get; set; }
     }
 }

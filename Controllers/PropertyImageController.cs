@@ -89,7 +89,7 @@ namespace RealEstateApp.Api.Controllers
         public async Task<IActionResult> Update([FromForm] PropertyUpdateImageRequestDTO request)
         {
             var image = await _context.PropertyImages
-                .SingleOrDefaultAsync(x => x.Id == request.PropertyId && x.Status != (int)EntityStatus.Deleted);
+                .SingleOrDefaultAsync(x => x.Id == request.Id && x.Status != (int)EntityStatus.Deleted);
             if (image == null) return NotFound();
 
             var property = await _context.Properties

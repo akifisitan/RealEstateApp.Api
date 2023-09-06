@@ -14,6 +14,7 @@ namespace RealEstateApp.Api.DTO.PropertyDTO
         public string Currency { get; set; }
         public string Status { get; set; }
         public string Type { get; set; }
+        public string Owner { get; set; }
         public List<PropertyFieldInfoDTO<PropertyImage>> Images { get; set; }
 
     }

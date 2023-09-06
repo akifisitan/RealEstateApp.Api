@@ -125,11 +125,16 @@ namespace RealEstateApp.Api.Controllers
             if (image == null) return NotFound();
 
             int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
-            var item = await _context.Properties
+            var property = await _context.Properties
                 .SingleOrDefaultAsync(x => x.Id == image.PropertyId && x.Status != (int)EntityStatus.Deleted);
-            if (item == null) return NotFound();
+            if (property == null) return NotFound();
 
-            if (item.UserId != userId && !User.IsInRole(UserRoles.Admin)) return Unauthorized();
+            if (property.UserId != userId && !User.IsInRole(UserRoles.Admin)) return Unauthorized();
+
+            var currentImageCount = await _context.PropertyImages
+                .Where(x => x.PropertyId == image.PropertyId && x.Status != (int)EntityStatus.Deleted)
+                .CountAsync();
+            if (currentImageCount == 1) return BadRequest();
 
             image.Status = (int)EntityStatus.Deleted;
             await _context.SaveChangesAsync();

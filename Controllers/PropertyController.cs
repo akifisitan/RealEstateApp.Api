@@ -75,6 +75,7 @@ namespace RealEstateApp.Api.Controllers
                 .Include(x => x.Currency)
                 .Include(x => x.PropertyStatus)
                 .Include(x => x.PropertyType)
+                .Include(x => x.User)
                 .FirstOrDefaultAsync();
 
             if (result == null) return NotFound();
@@ -99,6 +100,7 @@ namespace RealEstateApp.Api.Controllers
                 Status = result.PropertyStatus.Value,
                 Type = result.PropertyType.Value,
                 Currency = result.Currency.Value,
+                Owner = result.User.Username,
             };
             return Ok(responseDTO);
         }

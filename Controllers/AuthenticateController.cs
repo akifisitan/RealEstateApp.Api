@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using RealEstateApp.Api.Auth;
 using RealEstateApp.Api.DatabaseContext;
 using RealEstateApp.Api.DTO.AuthDTO;
+using RealEstateApp.Api.DTO.UserDTO;
 using RealEstateApp.Api.Entity;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -34,6 +35,26 @@ namespace RealEstateApp.Api.Controllers
             _configuration = configuration;
             _context = context;
         }
+
+        [HttpGet]
+        [Authorize(Roles = UserRoles.Admin)]
+        [Route("users/list")]
+        public async Task<IActionResult> List()
+        {
+            var result = await _context.Users.AsNoTracking().ToListAsync();
+            var users = new List<UserListDTO>();
+            foreach (var user in result)
+            {
+                users.Add(new UserListDTO()
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    Email = user.Email
+                });
+            }
+            return Ok(users);
+        }
+
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)

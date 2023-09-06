@@ -170,10 +170,10 @@ namespace RealEstateApp.Api.Controllers
             return Ok(new ResponseDTO { Status = "Success", Message = "Role created successfully." });
         }
 
-        [HttpPost]
+        [HttpDelete]
         [Authorize(Roles = UserRoles.Admin)]
         [Route("delete-role")]
-        public async Task<IActionResult> DeleteRole([FromBody] string roleName)
+        public async Task<IActionResult> DeleteRole(string roleName)
         {
             roleName = roleName.Trim();
             if (!await _roleManager.RoleExistsAsync(roleName))
@@ -181,18 +181,18 @@ namespace RealEstateApp.Api.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "Role does not exist." });
             }
             await _roleManager.DeleteAsync(new IdentityRole(roleName));
-            return Ok(new ResponseDTO { Status = "Success", Message = "Role deleted successfully." });
+            return NoContent();
         }
 
         [HttpPost]
         [Authorize(Roles = UserRoles.Admin)]
         [Route("assign-role")]
-        public async Task<IActionResult> AssignRole([FromBody] string username, string roleName)
+        public async Task<IActionResult> AssignRole([FromBody] AssignRoleRequestDTO request)
         {
-            var user = await _userManager.FindByNameAsync(username);
+            var user = await _userManager.FindByNameAsync(request.Username);
             if (user == null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDTO { Status = "Error", Message = "User does not exist." });
-            roleName = roleName.Trim();
+            var roleName = request.Role.Trim();
             if (await _roleManager.RoleExistsAsync(roleName))
             {
                 await _userManager.AddToRoleAsync(user, roleName);

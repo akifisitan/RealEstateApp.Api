@@ -170,6 +170,7 @@ if (!app.Environment.IsDevelopment())
         var result = await userManager.CreateAsync(newAdminUser, configuration["Credentials:AdminPassword"]);
         if (result.Succeeded)
         {
+            await userManager.AddToRoleAsync(newAdminUser, UserRoles.User);
             await userManager.AddToRoleAsync(newAdminUser, UserRoles.Admin);
             var newUser = new User()
             {

@@ -64,7 +64,7 @@ namespace RealEstateApp.Api.Controllers
                     if (memoryStream.Length < 2 * 1024 * 1024)
                     {
                         using var newImage = Image.Load(memoryStream.ToArray());
-                        newImage.Mutate(x => x.Resize(500, 0));
+                        newImage.Mutate(x => x.Resize(500, 375));
                         var newPropertyImage = new PropertyImage
                         {
                             PropertyId = request.PropertyId,
@@ -86,7 +86,7 @@ namespace RealEstateApp.Api.Controllers
 
         [Authorize(Roles = UserRoles.User)]
         [HttpPut]
-        public async Task<IActionResult> Update([FromBody] PropertyUpdateImageRequestDTO request)
+        public async Task<IActionResult> Update([FromForm] PropertyUpdateImageRequestDTO request)
         {
             var image = await _context.PropertyImages
                 .SingleOrDefaultAsync(x => x.Id == request.PropertyId && x.Status != (int)EntityStatus.Deleted);
@@ -107,7 +107,7 @@ namespace RealEstateApp.Api.Controllers
                 if (memoryStream.Length < 2 * 1024 * 1024)
                 {
                     using var newImage = Image.Load(memoryStream.ToArray());
-                    newImage.Mutate(x => x.Resize(500, 0));
+                    newImage.Mutate(x => x.Resize(500, 375));
                     image.Value = newImage.ToBase64String(JpegFormat.Instance);
                     await _context.SaveChangesAsync();
                     return NoContent();
@@ -131,10 +131,13 @@ namespace RealEstateApp.Api.Controllers
 
             if (property.UserId != userId && !User.IsInRole(UserRoles.Admin)) return Unauthorized();
 
-            var currentImageCount = await _context.PropertyImages
+            var currentImages = await _context.PropertyImages
+                .AsNoTracking()
                 .Where(x => x.PropertyId == image.PropertyId && x.Status != (int)EntityStatus.Deleted)
-                .CountAsync();
-            if (currentImageCount == 1) return BadRequest();
+                .ToListAsync();
+            if (currentImages.Count == 1) return BadRequest();
+
+            if (image.Id == currentImages[0].Id) property.Thumbnail = currentImages[1].Value;
 
             image.Status = (int)EntityStatus.Deleted;
             await _context.SaveChangesAsync();

@@ -390,7 +390,7 @@ namespace RealEstateApp.Api.Controllers
                     if (memoryStream.Length < 2 * 1024 * 1024)
                     {
                         using var image = Image.Load(memoryStream.ToArray());
-                        image.Mutate(x => x.Resize(500, 0));
+                        image.Mutate(x => x.Resize(500, 375, KnownResamplers.Lanczos3));
                         var b64 = image.ToBase64String(JpegFormat.Instance);
                         imageStrings.Add(b64);
                     }
@@ -406,10 +406,6 @@ namespace RealEstateApp.Api.Controllers
                 response.Message = "Please upload at least one valid image.";
                 return BadRequest(response);
             }
-            using var thumbnailStream = new MemoryStream();
-            await request.Images[0].CopyToAsync(thumbnailStream);
-            using var thumbnail = Image.Load(thumbnailStream.ToArray());
-            thumbnail.Mutate(x => x.Resize(320, 240, KnownResamplers.Lanczos3));
 
             int userId = Convert.ToInt32(User.FindFirst("Id")?.Value);
 
@@ -417,7 +413,7 @@ namespace RealEstateApp.Api.Controllers
             {
                 StartDate = startDate,
                 EndDate = parsedEndDate,
-                Thumbnail = thumbnail.ToBase64String(JpegFormat.Instance),
+                Thumbnail = imageStrings[0],
                 Latitude = request.Latitude,
                 Longitude = request.Longitude,
                 PropertyTypeId = request.PropertyTypeId,

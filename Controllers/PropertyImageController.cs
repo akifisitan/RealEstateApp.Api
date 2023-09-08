@@ -108,7 +108,15 @@ namespace RealEstateApp.Api.Controllers
                 {
                     using var newImage = Image.Load(memoryStream.ToArray());
                     newImage.Mutate(x => x.Resize(500, 375));
-                    image.Value = newImage.ToBase64String(JpegFormat.Instance);
+                    var newBase64 = newImage.ToBase64String(JpegFormat.Instance);
+
+                    var currentImages = await _context.PropertyImages
+                    .AsNoTracking()
+                    .Where(x => x.PropertyId == image.PropertyId && x.Status != (int)EntityStatus.Deleted)
+                    .ToListAsync();
+
+                    if (image.Id == currentImages[0].Id) property.Thumbnail = newBase64;
+                    image.Value = newBase64;
                     await _context.SaveChangesAsync();
                     return NoContent();
                 }

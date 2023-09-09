@@ -110,9 +110,11 @@ builder.Services.AddSwaggerGen(swagger =>
 var app = builder.Build();
 var logger = app.Logger;
 
-#region Migrate and Seed on Boot
+#region Apply migrations and seeding on boot
+var migrateOnBoot = configuration["ApplyMigrationsOnBoot"] == "Y";
 
-if (!app.Environment.IsDevelopment())
+if (!migrateOnBoot) logger.LogInformation("ApplyMigrationsOnBoot not specified, skipping migration checks and seeding.\nTo apply migration checks and seeding on boot, set \"ApplyMigrationsOnBoot\" to \"Y\" in appsettings.json.");
+else
 {
     using var scope = app.Services.CreateScope();
     var realEstateIdentityContext = scope.ServiceProvider.GetRequiredService<RealEstateIdentityContext>();

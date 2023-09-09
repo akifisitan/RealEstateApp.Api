@@ -248,7 +248,8 @@ namespace RealEstateApp.Api.Controllers
                 .Where(x => x.Price >= minPrice && x.Price <= maxPrice)
                 .Include(x => x.Currency)
                 .Include(x => x.PropertyStatus)
-                .Include(x => x.PropertyType);
+                .Include(x => x.PropertyType)
+                .OrderBy(x => x.Id);
 
             var totalItems = await query.CountAsync();
             var numberOfPages = (int)Math.Ceiling((double)totalItems / pageSize);

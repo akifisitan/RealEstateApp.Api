@@ -1,6 +1,6 @@
 # Real Estate App Api
 
-- Backend API for [Real Estate listing website](https://github.com/akifisitan/RealEstateApp) built using the .NET 6 Web API template
+- Backend API for [Real Estate listing website](https://github.com/akifisitan/RealEstateApp) built using .NET 6 Web API and Entity Framework Core
 
 ## Usage
 
@@ -22,14 +22,8 @@ docker compose up
 
 ## Info
 
-- The app will automatically apply migrations and create a default admin user with the following credentials:
-
-  - username: admin
-  - password: Test123.
-
-- These can be overridden by editing the contents of the .env file.
-- Other values like the connection strings and passwords can be set via the .env file as well.
-- Make sure to change the values of the .env file for production, these are just dummy values set for development.
+- The app will automatically apply migrations and seed the database if the ApplyMigrationsOnBoot environment variable is set to "Y"
+- Connection strings, passwords and default admin credentials can be set via the .env file.
 
 ## Development
 

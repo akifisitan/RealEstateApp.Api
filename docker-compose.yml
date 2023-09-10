@@ -16,6 +16,7 @@ services:
       - JWT__Secret=${JWT__Secret}
       - Credentials__AdminEmail=${Credentials__AdminEmail}
       - Credentials__AdminPassword=${Credentials__AdminPassword}
+      - ApplyMigrationsOnBoot=${ApplyMigrationsOnBoot}
 
   sql:
     image: "mcr.microsoft.com/mssql/server"

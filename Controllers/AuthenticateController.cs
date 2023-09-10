@@ -99,6 +99,7 @@ namespace RealEstateApp.Api.Controllers
 
             User newUser = new()
             {
+                Name = user.UserName,
                 Email = user.Email,
                 Username = user.UserName
             };
@@ -146,6 +147,7 @@ namespace RealEstateApp.Api.Controllers
             }
             User newUser = new()
             {
+                Name = user.UserName,
                 Email = user.Email,
                 Username = user.UserName
             };

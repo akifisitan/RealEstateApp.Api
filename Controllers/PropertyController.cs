@@ -391,7 +391,7 @@ namespace RealEstateApp.Api.Controllers
                     if (memoryStream.Length < 2 * 1024 * 1024)
                     {
                         using var image = Image.Load(memoryStream.ToArray());
-                        image.Mutate(x => x.Resize(500, 375, KnownResamplers.Lanczos3));
+                        image.Mutate(x => x.Resize(500, 375));
                         var b64 = image.ToBase64String(JpegFormat.Instance);
                         imageStrings.Add(b64);
                     }

@@ -176,7 +176,6 @@ else
             await userManager.AddToRoleAsync(newAdminUser, UserRoles.Admin);
             var newUser = new User()
             {
-                Name = newAdminUser.UserName,
                 Email = newAdminUser.Email,
                 Username = newAdminUser.UserName
             };

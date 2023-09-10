@@ -10,7 +10,7 @@
             Message = string.Empty;
         }
 
-        public GenericResponse(string message, T data)
+        public GenericResponse(T? data, string message)
         {
             Message = message;
             Data = data;

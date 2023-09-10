@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RealEstateApp.Api.Auth;
 using RealEstateApp.Api.DatabaseContext;
+using RealEstateApp.Api.DTO;
 using RealEstateApp.Api.DTO.PropertyFieldDTO;
 using RealEstateApp.Api.Entity;
 using RealEstateApp.Api.Enums;
@@ -32,26 +33,33 @@ namespace RealEstateApp.Api.Controllers
                 .Where(p => p.Status != (int)EntityStatus.Deleted)
                 .ToListAsync();
 
-            if (result == null)
-                return NotFound();
+            if (result == null) return NotFound();
 
-            var statusInfoList = new List<PropertyFieldInfoDTO<PropertyStatus>>();
-            result.ForEach(status => statusInfoList.Add(new PropertyFieldInfoDTO<PropertyStatus>(status)));
+            var infoList = new List<PropertyFieldInfoDTO<PropertyStatus>>();
+            result.ForEach(x => infoList.Add(new PropertyFieldInfoDTO<PropertyStatus>(x)));
 
-            return Ok(statusInfoList);
+            return Ok(infoList);
         }
 
         [Authorize(Roles = UserRoles.Admin)]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] PropertyFieldCreateRequestDTO request)
         {
-            request.Value = request.Value.Trim();
-            if (request.Value.IsNullOrEmpty())
-            {
-                return BadRequest();
-            }
-            var item = _set.Add(new PropertyStatus(request.Value));
+            var value = request.Value.Trim();
+
+            if (value.IsNullOrEmpty()) return BadRequest(new GenericResponse<string>(null, "Please enter a non-empty value"));
+
+            var caseInsensitiveValue = value.ToLower();
+
+            var existingItem = await _set
+                .SingleOrDefaultAsync(x => x.Value.ToLower() == caseInsensitiveValue &&
+                                           x.Status != (int)EntityStatus.Deleted);
+
+            if (existingItem != null) return Conflict(new GenericResponse<string>(null, "Please enter a unique value"));
+
+            var item = _set.Add(new PropertyStatus(value));
             await _context.SaveChangesAsync();
+
             return Ok(new PropertyFieldInfoDTO<PropertyStatus>(item.Entity));
         }
 
@@ -59,35 +67,42 @@ namespace RealEstateApp.Api.Controllers
         [HttpPut]
         public async Task<IActionResult> Put([FromBody] PropertyFieldUpdateRequestDTO request)
         {
-            request.Value = request.Value.Trim();
-            if (request.Value.IsNullOrEmpty())
-            {
-                return BadRequest();
-            }
+            var value = request.Value.Trim();
+
+            if (value.IsNullOrEmpty()) return BadRequest(new GenericResponse<string>(null, "Please enter a non-empty value"));
+
             var item = await _set
-                .SingleOrDefaultAsync(x => x.Id == request.Id && x.Status != (int)EntityStatus.Deleted);
-            if (item != null)
-            {
-                item.Value = request.Value;
-                await _context.SaveChangesAsync();
-                return Ok(new PropertyFieldInfoDTO<PropertyStatus>(item));
-            }
-            return NotFound();
+                .SingleOrDefaultAsync(x => x.Id == request.Id &&
+                                           x.Status != (int)EntityStatus.Deleted);
+
+            if (item == null) return NotFound();
+
+            var caseInsensitiveValue = value.ToLower();
+
+            var existingItem = await _set
+                .SingleOrDefaultAsync(x => x.Value.ToLower() == caseInsensitiveValue &&
+                                           x.Status != (int)EntityStatus.Deleted);
+
+            if (existingItem != null) return Conflict(new GenericResponse<string>(null, "Please enter a unique value"));
+
+            item.Value = value;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
         [Authorize(Roles = UserRoles.Admin)]
         [HttpDelete]
         public async Task<IActionResult> Delete(int id)
         {
-            var item = await _set
-                .SingleOrDefaultAsync(x => x.Id == id && x.Status != (int)EntityStatus.Deleted);
-            if (item != null)
-            {
-                item.Status = (int)EntityStatus.Deleted;
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            return NotFound();
+            var item = await _set.SingleOrDefaultAsync(x => x.Id == id && x.Status != (int)EntityStatus.Deleted);
+
+            if (item == null) return NotFound();
+
+            item.Status = (int)EntityStatus.Deleted;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
     }

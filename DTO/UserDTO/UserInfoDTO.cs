@@ -4,17 +4,19 @@ namespace RealEstateApp.Api.DTO.UserDTO
 {
     public class UserInfoDTO
     {
-        public int Id { get; set; }
         public string Username { get; set; }
+        public string Email { get; set; }
+
 
         public UserInfoDTO()
         {
             Username = string.Empty;
+            Email = string.Empty;
         }
         public UserInfoDTO(User user)
         {
-            Id = user.Id;
             Username = user.Username;
+            Email = user.Email;
         }
     }
 }

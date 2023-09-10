@@ -1,4 +1,5 @@
 ﻿using RealEstateApp.Api.DTO.PropertyFieldDTO;
+using RealEstateApp.Api.DTO.UserDTO;
 using RealEstateApp.Api.Entity;
 
 namespace RealEstateApp.Api.DTO.PropertyDTO
@@ -14,7 +15,7 @@ namespace RealEstateApp.Api.DTO.PropertyDTO
         public string Currency { get; set; }
         public string Status { get; set; }
         public string Type { get; set; }
-        public string Owner { get; set; }
+        public UserInfoDTO Owner { get; set; }
         public List<PropertyFieldInfoDTO<PropertyImage>> Images { get; set; }
 
     }

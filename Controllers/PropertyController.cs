@@ -6,6 +6,7 @@ using RealEstateApp.Api.DatabaseContext;
 using RealEstateApp.Api.DTO;
 using RealEstateApp.Api.DTO.PropertyDTO;
 using RealEstateApp.Api.DTO.PropertyFieldDTO;
+using RealEstateApp.Api.DTO.UserDTO;
 using RealEstateApp.Api.Entity;
 using RealEstateApp.Api.Enums;
 using SixLabors.ImageSharp.Formats.Jpeg;
@@ -34,7 +35,6 @@ namespace RealEstateApp.Api.Controllers
             var result = await _context.Properties.AsNoTracking()
                 .Where(x => x.Status != (int)EntityStatus.Deleted)
                 .Include(x => x.PropertyImages)
-                .Include(x => x.User)
                 .Include(x => x.Currency)
                 .Include(x => x.PropertyStatus)
                 .Include(x => x.PropertyType)
@@ -100,7 +100,7 @@ namespace RealEstateApp.Api.Controllers
                 Status = result.PropertyStatus.Value,
                 Type = result.PropertyType.Value,
                 Currency = result.Currency.Value,
-                Owner = result.User.Username,
+                Owner = new UserInfoDTO(result.User),
             };
             return Ok(responseDTO);
         }

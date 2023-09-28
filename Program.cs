@@ -17,13 +17,13 @@ ConfigurationManager configuration = builder.Configuration;
 #region Real Estate
 
 // Use SqlServer
-builder.Services.AddDbContext<RealEstateContext>(options => options.UseSqlServer(configuration.GetConnectionString("RealEstate")));
+builder.Services.AddDbContext<RealEstateContext>(options => options.UseNpgsql(configuration.GetConnectionString("RealEstate")));
 
 #endregion
 
 #region Real Estate Identity
 
-builder.Services.AddDbContext<RealEstateIdentityContext>(options => options.UseSqlServer(configuration.GetConnectionString("RealEstateIdentity")));
+builder.Services.AddDbContext<RealEstateIdentityContext>(options => options.UseNpgsql(configuration.GetConnectionString("RealEstateIdentity")));
 
 #endregion
 
